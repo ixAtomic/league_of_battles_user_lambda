@@ -1,9 +1,14 @@
+use crate::models::team_model::TeamResponseModel;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+
 #[derive(Debug, Serialize)]
 pub struct UserResponseModel {
     pub user: UserModel,
     pub stats: StatisticsWithAggregateModel,
+    pub teams: Vec<TeamResponseModel>,
+    pub one_day_stats: StatisticsWithAggregateModel,
+    pub seven_day_stats: StatisticsWithAggregateModel,
+    pub thirty_day_stats: StatisticsWithAggregateModel,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -13,7 +18,6 @@ pub struct UserModel {
     pub last_name: String,
     pub email: String,
     pub first_name: String,
-    pub statistics: HashMap<String, i64>,
     pub riot_puuid: String,
 }
 

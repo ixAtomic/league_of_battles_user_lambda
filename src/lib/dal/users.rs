@@ -1,5 +1,8 @@
 use crate::config;
-use aws_sdk_dynamodb::{model::AttributeValue, Client, Error};
+use aws_sdk_dynamodb::{
+    model::{AttributeValue, KeysAndAttributes},
+    Client, Error,
+};
 use chrono::prelude::*;
 use dotenv::dotenv;
 use reqwest::{self};
@@ -57,6 +60,36 @@ pub async fn get_user(user_id: &str) -> Result<HashMap<String, AttributeValue>, 
         .await?;
     let result = result.item.unwrap();
     Ok(result)
+}
+
+pub async fn get_user_teams(
+    team_ids: &Vec<String>,
+) -> Result<HashMap<String, Vec<HashMap<String, AttributeValue>>>, Error> {
+    let client = connect().await?;
+    //its kind of weird to make this mutable
+    let teams = get_teams_and_attributes(team_ids);
+    println!("teams returned from map function: {:?}", teams);
+    let mut result = client
+        .batch_get_item()
+        .request_items("Teams", teams)
+        .send()
+        .await?;
+
+    Ok(result.responses.take().unwrap())
+}
+
+fn get_teams_and_attributes(team_ids: &Vec<String>) -> KeysAndAttributes {
+    let keys: Vec<HashMap<String, AttributeValue>> = team_ids
+        .iter()
+        .map(|id| {
+            std::iter::once((String::from("id"), AttributeValue::S(id.to_string()))).collect()
+        })
+        .collect();
+
+    //.map(|id| ("id", AttributeValue::S(id)));
+    KeysAndAttributes::builder()
+        .set_keys(if keys.is_empty() { None } else { Some(keys) })
+        .build()
 }
 
 pub async fn get_user_statistics(

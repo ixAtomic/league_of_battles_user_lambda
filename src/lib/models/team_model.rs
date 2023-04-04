@@ -1,10 +1,13 @@
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TeamResponseModel {
-    pub username: String,
-    pub teams: Vec<String>,
-    pub last_name: String,
-    pub email: String,
-    pub first_name: String,
-    pub statistics: HashMap<String, i64>,
+    pub id: String,
+    pub current_streak: i64,
+    pub highest_streak: i64,
+    pub loss: i64,
+    pub wins: i64,
+    pub team_type: i64,
+    pub team_name: String,
+    pub position: i64,
+    pub players: Vec<String>,
 }

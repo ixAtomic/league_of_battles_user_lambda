@@ -1,4 +1,6 @@
 use crate::dal::users;
+use crate::models::team_model::TeamResponseModel;
+use chrono::{Duration, Utc};
 // use crate::home::home::{HomePageResponse, StatisticsAggregateResponse};
 use crate::models::user_model::{
     StatisticsWithAggregateModel, Stats, UserModel, UserResponseModel,
@@ -13,15 +15,19 @@ pub async fn get_user_data(user_id: &str) -> Result<UserResponseModel, Error> {
     //     .await
     //     .unwrap();
     let user_stats = construct_statistics_model(&user.riot_puuid).await;
-    let stats = aggregate_stats(&user_stats);
+    let teams = construct_team_model(&user.teams).await;
 
     Ok(UserResponseModel {
         user: user,
-        stats: stats,
+        stats: aggregate_stats(&user_stats, None),
+        teams: teams,
+        one_day_stats: aggregate_stats(&user_stats, Some(get_date_days_ago(1))),
+        seven_day_stats: aggregate_stats(&user_stats, Some(get_date_days_ago(7))),
+        thirty_day_stats: aggregate_stats(&user_stats, Some(get_date_days_ago(30))),
     })
 }
 
-fn aggregate_stats(stats: &Vec<Stats>) -> StatisticsWithAggregateModel {
+fn aggregate_stats(stats: &Vec<Stats>, begin_date: Option<String>) -> StatisticsWithAggregateModel {
     let init = StatisticsWithAggregateModel {
         total_damage: 0,
         total_earnings: 0,
@@ -38,7 +44,24 @@ fn aggregate_stats(stats: &Vec<Stats>) -> StatisticsWithAggregateModel {
         total_losses: acc.total_losses + if stat.match_result { 0 } else { 1 },
     };
 
-    stats.iter().fold(init, f)
+    if let Some(date) = begin_date {
+        stats
+            .iter()
+            .filter(|stat| stat.match_date > date)
+            .fold(init, f)
+    } else {
+        stats.iter().fold(init, f)
+    }
+}
+
+async fn construct_team_model(team_ids: &Vec<String>) -> Vec<TeamResponseModel> {
+    let mut teams: Vec<TeamResponseModel> = Vec::new();
+    let results = users::get_user_teams(team_ids).await.unwrap_or_default();
+    let items = results.get("Teams").take().unwrap();
+    for item in items {
+        teams.push(from_item(item.to_owned()).expect("Should parse into Tean Response model"))
+    }
+    teams
 }
 
 async fn construct_statistics_model(puuid: &str) -> Vec<Stats> {
@@ -55,4 +78,10 @@ pub async fn get_user(username: &str) -> UserModel {
     let result: UserModel =
         from_item(result).expect("the result should parse to the Response Model");
     return result;
+}
+
+fn get_date_days_ago(days: i64) -> String {
+    (Utc::now() - Duration::days(days))
+        .format("%Y%m%d%H%M%S")
+        .to_string()
 }
