@@ -62,12 +62,28 @@ pub async fn get_user(user_id: &str) -> Result<HashMap<String, AttributeValue>, 
     Ok(result)
 }
 
+pub async fn get_team_matches(
+    match_ids: &Vec<String>,
+) -> Result<HashMap<String, Vec<HashMap<String, AttributeValue>>>, Error> {
+    let client = connect().await?;
+    //its kind of weird to make this mutable
+    let team_matches = get_keys_and_attributes(match_ids);
+    println!("matches returned from map function: {:?}", team_matches);
+    let mut result = client
+        .batch_get_item()
+        .request_items("Matches", team_matches)
+        .send()
+        .await?;
+    println!("results: {:?}", result);
+    Ok(result.responses.take().unwrap())
+}
+
 pub async fn get_user_teams(
     team_ids: &Vec<String>,
 ) -> Result<HashMap<String, Vec<HashMap<String, AttributeValue>>>, Error> {
     let client = connect().await?;
     //its kind of weird to make this mutable
-    let teams = get_teams_and_attributes(team_ids);
+    let teams = get_keys_and_attributes(team_ids);
     println!("teams returned from map function: {:?}", teams);
     let mut result = client
         .batch_get_item()
@@ -78,7 +94,7 @@ pub async fn get_user_teams(
     Ok(result.responses.take().unwrap())
 }
 
-fn get_teams_and_attributes(team_ids: &Vec<String>) -> KeysAndAttributes {
+fn get_keys_and_attributes(team_ids: &Vec<String>) -> KeysAndAttributes {
     let keys: Vec<HashMap<String, AttributeValue>> = team_ids
         .iter()
         .map(|id| {

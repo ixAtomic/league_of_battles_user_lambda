@@ -1,5 +1,6 @@
 use crate::dal::users;
-use crate::models::team_model::TeamResponseModel;
+use crate::models::match_model::MatchResponseModel;
+use crate::models::team_model::{TeamModel, TeamResponseModel};
 use chrono::{Duration, Utc};
 // use crate::home::home::{HomePageResponse, StatisticsAggregateResponse};
 use crate::models::user_model::{
@@ -55,13 +56,32 @@ fn aggregate_stats(stats: &Vec<Stats>, begin_date: Option<String>) -> Statistics
 }
 
 async fn construct_team_model(team_ids: &Vec<String>) -> Vec<TeamResponseModel> {
-    let mut teams: Vec<TeamResponseModel> = Vec::new();
+    //let mut teams: Vec<TeamModel> = Vec::new();
     let results = users::get_user_teams(team_ids).await.unwrap_or_default();
     let items = results.get("Teams").take().unwrap();
+    let mut teams: Vec<TeamResponseModel> = Vec::new();
     for item in items {
-        teams.push(from_item(item.to_owned()).expect("Should parse into Tean Response model"))
+        let team_model: TeamModel =
+            from_item(item.to_owned()).expect("Should parse into Team Response model");
+        let matches: Vec<MatchResponseModel> = construct_match_model(&team_model.matches).await;
+        teams.push(TeamResponseModel {
+            team: team_model,
+            matches,
+        })
     }
     teams
+}
+
+async fn construct_match_model(matches: &Vec<String>) -> Vec<MatchResponseModel> {
+    let mut team_matches: Vec<MatchResponseModel> = Vec::new();
+    let results = users::get_team_matches(matches).await.unwrap_or_default();
+    let items = results.get("Matches").take().unwrap();
+    for item in items {
+        let matches_model: MatchResponseModel =
+            from_item(item.to_owned()).expect("Should parse into Match Response model");
+        team_matches.push(matches_model)
+    }
+    team_matches
 }
 
 async fn construct_statistics_model(puuid: &str) -> Vec<Stats> {
