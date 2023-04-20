@@ -1,6 +1,6 @@
 use crate::config;
 use aws_sdk_dynamodb::{
-    model::{AttributeValue, KeysAndAttributes},
+    types::{AttributeValue, KeysAndAttributes},
     Client, Error,
 };
 use chrono::prelude::*;

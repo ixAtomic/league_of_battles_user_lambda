@@ -28,9 +28,9 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
 ] }
 chrono = "0.4.24"
 lazy_static = "1.4.0"
-serde_dynamo = { version = "4.0.12", features = ["aws-sdk-dynamodb+0_24"] }
-aws-config = "0.54.1"
-aws-sdk-dynamodb = "0.24.0"
+serde_dynamo = { version = "4", features = ["aws-sdk-dynamodb+0_26"] }
+aws-config = "0.55.1"
+aws-sdk-dynamodb = "0.26.0"
 dotenv = "0.15.0"
 reqwest = "0.11.14"
 url = "2.3.1"

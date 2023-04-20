@@ -7,8 +7,7 @@ use crate::models::user_model::{
     StatisticsWithAggregateModel, Stats, UserModel, UserResponseModel,
 };
 use lambda_http::Error;
-use serde_dynamo::aws_sdk_dynamodb_0_24::from_items;
-use serde_dynamo::{self, from_item};
+use serde_dynamo::aws_sdk_dynamodb_0_26::{from_item, from_items};
 
 pub async fn get_user_data(user_id: &str) -> Result<UserResponseModel, Error> {
     let user = get_user(user_id).await;
